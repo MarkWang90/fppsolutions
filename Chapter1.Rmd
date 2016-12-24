@@ -1,0 +1,106 @@
+---
+title: "Exercise solutions: Section 1.8"
+author: "Rob J Hyndman & George Athanasopoulos"
+output: html_document
+---
+
+## Exercise 1.1
+
+### Case study 1
+
+This is time series data since disposable tableware sales change over time (assuming all other conditions stay the same).
+
+### Case study 2
+
+This is time series data since use of drugs through PBS changes over time (assuming all other conditions stay the same).
+
+### Case study 3
+
+This is time series data since sales of cars change over time (assuming all other conditions stay the same).  
+For forecasting this data can be treated as cross-sectional by ignoring the time of sale, although accuracy of the forecasts can suffer.
+
+### Case study 4
+
+This is time series data since number of passengers change over time (assuming all other conditions stay the same).
+
+## Exercise 1.2
+
+### Case study 3
+
+The following predictor variables might be useful, assuming that the relevant data are available:
+
+* Model and make of the vehicle
+
+* Odometer reading
+
+* Conditions of the vehicle
+
+* Company the vehicle was leased to
+
+* Color of the vehicle
+
+* Date of sale
+
+
+### Case study 4
+
+The following predictor variables might be useful, assuming that the relevant data are available:
+
+* Day of the week
+
+* Day of the year
+
+* Is the day before long weekend
+
+* Is the day in the end of long weekend
+
+* Is the day before or in the beginning of school holidays (one variable per every state)
+
+* Is the day in the end of school holidays (one variable per every state)
+
+* Is the day before or in the beginning of a major sport event
+
+* Is the day after of a major sport event
+
+* Competitors' prices (relative to the price of the airline in question)
+
+* Is there a pilot strike at some of the competitors' airlines
+
+* Is there a pilot strike at the airline in question
+
+
+## Exercise 1.3
+
+### Five steps of forecasting for case study 3
+
+#### Problem definition
+
+* The main stakeholders should be defined and everyone questioned about which way he or she can benefit from the new system. In case of the fleet company probably the group of specialists was not recognized as stakeholders which led to complications in gathering relevant information and later in finding an appropriate statistical approach and deployment of the new forecasting method.
+
+#### Gathering information
+
++ Data set of past sales should be obtained, including surrounding information such as the way data were gathered, possible outliers and incorrect records, special values in the data.
+
++ Expertise knowledge should be obtained from people responsible for the sales such as seasonal price fluctuations, if there is dependency of the price on the situation in economy, also finding other possible factors which can influence the price.
+
+#### Preliminary (exploratory) analysis
+
++ Possible outliers and inconsistent information should be found (for example very small, zero or even negative prices).
+
++ Graphs which show dependency of the sale price on different predictor variables should be considered.
+
++ Dependency of the sale price on month of the year should be plot.
+
+#### Choosing and fitting models
+
++ A model to start from (for example a linear model) and predictor variables which most likely affect the forecasts should be chosen. Predicting performance of the model should be evaluated.
+
++ The model should be changed (for example by transforming parameters, adding or removing predictor variables) and it's performance evaluated. This should be done iteratively a few times until a satisfactory model is found.
+
+#### Using and evaluating a forecasting model
+
++ The appropriate software should be deployed to the company and relevant people should be educated how to use this software.
+
++ Forecasting accuracy should be checked against new sales. If necessary the model should be updated and then the deployed software.
+
+

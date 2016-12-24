@@ -1,0 +1,318 @@
+---
+title: "Exercise Solutions: Section 5.8"
+author: "Rob J Hyndman & George Athanasopoulos"
+output: html_document
+---
+```{r, echo = F, message = F}
+require(fpp)
+```
+
+## Exercise 5.1
+
+### The data, plot and the main features
+
+```{r, comment=""}
+fancy
+```
+
+```{r, comment=""}
+plot(fancy, ylab = "Sales")
+```
+
+Features of the data:
+
+* Seasonal data -- similar scaled pattern repeats every year
+
+* A spike every March (except for year 1987) is the influence of the surfing festival
+
+* The size of the pattern increases proportionally to the level of sales
+
+The last feature of the data suggests taking logs to make the pattern (and variance) more stable
+
+### Taking logarithms of the data
+
+```{r, comment=""}
+plot(log(fancy), ylab = "log Sales")
+```
+
+Taking logs is important before fitting a linear model since after taking logs influence of predictors becomes linear (or the relation becomes more linear). The trend also looks linear after taking logs. All this means that fitting a linear model to the transformed data probably will lead to better predicting accuracy, rather than fitting a linear model to the original data. 
+
+### Fitting a linear regression
+
+"festival" dummy can be created this way:
+
+```{r, comment=""}
+festival <- cycle(fancy) == 3
+festival[3] <- FALSE
+festival
+```
+
+```{r, comment=""}
+fit <- tslm(fancy ~ trend + season + festival, lambda = 0)
+# By specifying "lambda = 0"" we tell the model to transform data before fitting the linear model,
+# also the forecasts on the log scale will be automatically transformed back to the orignal scale
+# by applying exponent
+plot(fancy, ylab = "Sales")
+lines(fitted(fit), col = "red")
+legend("topleft",
+       legend = c("Original data", "Fitted values"),
+       col = c("black", "red"), lty = 1)
+```
+
+### Residuals
+
+Plot of the residuals against time:
+```{r, comment=""}
+Residuals <- residuals(fit)
+plot(Residuals, type="p", )
+abline(h = 0, col="grey")
+```
+
+The residuals are serially correlated. They reveal nonlinearity in the trend.
+
+Plot of the residuals against the fitted values:
+```{r, comment=""}
+plot(c(Residuals) ~ c(fitted(fit)), xlab = "Fitted values", ylab = "Residuals")
+# "as.vector" strips information about sequence from the data
+abline(h = 0, col="grey")
+```
+
+There are no problems apparent in this graph.
+
+### Boxplot of the residuals
+
+```{r, comment=""}
+month <- cycle(Residuals)
+boxplot(Residuals ~ month, names = month.abb)
+```
+
+The boxplot does not reveal any problems except heteroscedasticity.
+
+### Coefficients of the linear model
+
+```{r, comment=""}
+coef(fit)
+```
+
+* the "(Intercept)" is not interpretable
+
+* "trend" coefficient shows that with every year logarithm of sales increases on average by `r round(coef(fit)[2], 2)`
+
+* "season2" coefficient shows that in February logarithm of sales increases compare to January on average by `r round(coef(fit)[3], 2)`
+
+* ...
+
+* "season12" coefficient shows that in December logarithm of sales increases compare to January on average by `r round(coef(fit)[13], 2)`
+
+* "festivalTRUE" coefficient shows that with surfing festival logarithm of sales increases compare to months without the festival on average by `r round(coef(fit)[14], 2)`
+
+### Durbin-Watson statistic
+
+```{r, comment=""}
+dwtest(fit, alternative="two.sided")
+```
+Very small p-value and Durbin-Watson statistic value `r round(dwtest(fit, alternative="two.sided")$statistic, 2)`, which is less than 2, tells that there is positive auto correlation in the residuals. The model is not adequate. It also can be improved.
+
+### Prediction of the monthly sales for years 1994, 1995, and 1996
+
+```{r, comment=""}
+future.festival <- rep(FALSE, 36)
+future.festival[c(3, 15, 27)] <- TRUE
+fcast = forecast(fit, h = 36, newdata=data.frame(festival = future.festival))
+plot(fcast)
+```
+
+Since the model already incorporates the log transformation (by specifying parameter lambda = 0, see above), the forecast does not need to be transformed back to the original scale.
+
+### Possible improvements
+
+* The model can be improved by taking into account nonlinearity of the trend. See the next exercise as an example how it can be done.
+
+
+\newpage
+
+
+## Exercise 5.2
+
+### Scatterplot of the texasgas data set
+
+```{r, comment=""}
+plot(consumption ~ price, data = texasgas)
+```
+
+### Model 1
+
+```{r, comment=""}
+price = texasgas$price
+consumption = texasgas$consumption
+fit1 = lm(log(consumption) ~ price)
+plot(consumption ~ price, data = texasgas)
+lines(price, exp(fitted(fit1)), col = "red")
+```
+
+The model does not fit the data well.
+
+The residuals graph:
+
+```{r, comment=""}
+residuals1 = exp(fitted(fit1)) - consumption
+plot(residuals1 ~ price, ylab = "Residuals for Model 1")
+abline(h = 0, col = "grey")
+```
+ 
+The residuals graph shows that more information can be extracted from the price than already done.  
+For example all the residuals for prices less than 50 are less than zero. Most of the residuals for prices from 50 to 70 are above zero.
+
+The model is not adequate since the residuals are not random conditional on the predictor -- price.
+
+Calculation of $R^2$ and $AIC$:
+```{r, comment=""}
+SSE = sum(residuals1^2)
+N = length(consumption)
+R2 = 1 - SSE/sum((consumption - sum(consumption)/N)^2)
+cat(paste("R2:", round(R2, 2)))
+
+AIC = N * log(SSE/N) + 2 * 3 # Since there are 3 estimated parameters in the model:
+# intercept, slope (coefficient in front of price) and the variance of the error term
+cat(paste("AIC: ", round(AIC, 1)))
+```
+
+### Model 2
+
+$C_i = \begin{cases} a_1+b_1P_i+e_i, & \mbox{when } P_i \le 60
+\\ a_2+b_2P_i+e_i, & \mbox{when } P_i > 60 \end{cases}$
+
+Model 2 is not a linear model, but it can be presented as a linear model.
+
+To perform such transformation at first we define so-called "indicator" functions $I_{up}$ and $I_{down}$:
+
+$I_{down}(P) = \begin{cases} 1, & \mbox{when } P_i \le 60
+\\ 0, & \mbox{when } P_i > 60 \end{cases}$
+
+$I_{up}(P) = \begin{cases} 0, & \mbox{when } P_i \le 60
+\\ 1, & \mbox{when } P_i > 60 \end{cases}$
+
+Now we can find that Model 2 can be presented as:
+
+$C_i = (a_1 + b_1 P_i + e_i) I_{down}(P_i) + (a_2 + b_2 P_i + e_i) I_{up}(P_i)$
+
+After opening brackets, noting that $I_{down}(P) + I_{up}(P) \equiv 1$ and rearranging we find:
+
+$C_i = a_1 I_{down}(P_i) + a_2 I_{up}(P_i) + b_1 P_i I_{down}(P_i) + b_2 P_i I_{up}(P_i) + e_i$
+
+This form can be considered as a linear model with no intercept and four predictors:
+
+* $D_{down} = I_{down}(P_i)$ -- is a dummy variable, taking value $1$ for observations where $P_i \le 60$ and $0$ for any other observations
+
+* $D_{up} = I_{up}(P_i)$ -- is a dummy variable, taking value $1$ for observations where $P_i > 60$ and $0$ for any other observations
+
+* $P_{down} = P_i I_{down}(P_i)$ -- is a new predictor, taking values $P_i$ for observations where $P_i \le 60$ and $0$ for any other observations
+
+* $P_{up} = P_i I_{up}(P_i)$ -- is a new predictor, taking values $P_i$ for observations where $P_i > 60$ and $0$ for any other observations
+
+In R it can be implemented as:
+
+```{r, comment=""}
+fit2 = lm(
+  consumption ~ 0 +
+  ifelse(price <= 60, 1, 0) +
+  ifelse(price<=60, 0, 1) +
+  ifelse(price<=60, price, 0) +
+  ifelse(price<=60, 0, price),
+  data = texasgas)
+# "0" in the formula means that intercept is required to be exacly zero.
+# Use command ?ifelse to find how function ifelse works.
+
+plot(consumption ~ price, data = texasgas)
+lines(price, fitted(fit2), col = "red", type = "p")
+```
+
+The model fits the data well.
+
+The residuals graph:
+
+```{r, comment=""}
+residuals2 = fitted(fit2) - consumption
+plot(residuals2 ~ price, ylab = "Residuals for Model 2")
+abline(h = 0, col = "grey")
+```
+
+The residuals graph does reveal any problems except heteroscedasticity: variance of the residuals is greater, when price less or equal 60 cents, than variance of the residuals, when price greater than 60 cents.
+
+The model is not adequate because of heteroscedasticity. On the other hand the model can be easily adjusted to be adequate by assuming that error terms $e_i$ have different variance for prices less or equal than 60 cents and for prices greater than 60 cents.
+
+Calculation of $R^2$ and $AIC$:
+
+```{r, comment=""}
+SSE = sum(residuals2^2)
+N = length(consumption)
+R2 = 1 - SSE/sum((consumption - sum(consumption)/N)^2)
+cat(paste("R2:", round(R2, 2)))
+
+cat(paste("AIC: ", round(CV(fit2)[2], 1)))
+```
+
+### Model 3
+
+```{r, comment=""}
+fit3 = lm(consumption ~ price + I(price^2), data = texasgas)
+plot(consumption ~ price, data = texasgas)
+lines(price, fitted(fit3), col = "red")
+```
+
+The model fits the data rather well. Although it is difficult to explain why consumption can increase when the gas becomes more expensive (this situation appears on the graph for prices greater than 90 cents).
+
+The residuals graph:
+
+```{r, comment=""}
+residuals3 = fitted(fit3) - consumption
+plot(residuals3 ~ price, ylab = "Residuals for Model 3")
+abline(h = 0, col = "grey")
+```
+ 
+The residuals graph does reveal any problems except some heteroscedasticity: variance of the residuals is greater, when price less or equal 60 cents, than variance of the residuals, when price greater than 60 cents.
+
+The model is not adequate because of heteroscedasticity.
+
+Calculation of $R^2$ and $AIC$:
+```{r, comment=""}
+SSE = sum(residuals3^2)
+N = length(consumption)
+R2 = 1 - SSE/sum((consumption - sum(consumption)/N)^2)
+cat(paste("R2:", round(R2, 2)))
+
+cat(paste("AIC: ", round(CV(fit3)[2], 1)))
+```
+
+### The best model. Forecasting. Prediction intervals.
+
+According to AIC, which is lowest for Model 2, it is the best model for forecasting.
+
+Forecast for prices 40, 60, 80, 100, and 120 cents per 1,000 cubic feet with 95% prediction intervals:
+
+```{r, comment=""}
+newPrices = data.frame(price = c(40, 50, 60, 61, 70, 80, 90, 100, 110, 120))
+fcast = forecast(fit2, newdata = newPrices, level = 95)
+plot(price, consumption, ylim = c(-20, 150), xlim = c(30, 120))
+lines(newPrices$price, fcast$mean, col="red")
+for(i in 1:10) {
+  lines(rep(newPrices$price[i], 2), c(fcast$upper[i], fcast$lower[i]),
+        col = rgb(0, 0, 1, 0.1), type = "l", lwd = 10)
+}
+abline(h = 0, col = "grey")
+```
+
+The prediction values sit rather well inside the observed values, therefore they look reasonable. Although the second look reveals some problems. It is difficult to believe that consumption suddenly changes when price changes from 60 to 61 cents. It is even less believable, that consumption increases, when the price increases from 60 cents to 61 or 70 or even 80 cents.
+
+The prediction intervals look correct for prices less or equal to 60 cents. Although the interval suddenly increases in size when price changes from 60 cents to 61 cent. It looks unrealistic that customers behavior has so sudden shift around price of 60 cents. Another problem appears for prices of 110 cents and greater: the prediction intervals touch negative values. According to the model it means that with some probability the consumption can be negative for such prices.
+
+On the other hand, it might be a hint, that when the price reaches 120 cents per 1,000 cubic feet, at some circumstances, a competitor can appear on the market, or customers will move to alternative sources of heat.
+
+### Correlation between price and price squared
+
+```{r, comment=""}
+cat(cor(price, price^2))
+```
+
+The correlation is very high. It means that for Model 3 the coefficients of the predictors can have wide confidence intervals.
+

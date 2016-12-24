@@ -1,0 +1,716 @@
+---
+title: "Solutions for exercises of Section 8."
+author: "Rob J Hyndman & George Athanasopoulos"
+output: html_document
+---
+```{r, echo = F, message = F}
+require(fpp)
+```
+
+## Exercise 8.1
+
+### ACF graphs of white noise
+
+* The difference between figures is that they show different critical values (blue dashed lines).
+
+* All figures indicate that the data is white noise.
+
+* The critical values are at different distances from zero because the data sets have different number of observations. The more observation are in a data set representing white noise the less noise appears in the correlation estimations (spikes). Therefore the critical values for bigger data sets can be smaller in order to check if the data is not white noise.
+
+## Exercise 8.2
+
+### ACF and PACF graphs of dataset ibmclose
+
+```{r, comment=""}
+plot(ibmclose)
+```
+
+```{r, comment=""}
+Acf(ibmclose, lag.max = 100, main = "") # lag.max = 100 sets the maximum lag at which to calculate the ACF to 100
+```
+
+ACF does not drop quickly to zero, moreover the value $r_1$ is large and positive (almost 1 in this case). All these are signs of a non-stationary time series. Therefore it should be differenced to apply ARMA model.
+```{r, comment=""}
+Pacf(ibmclose, lag.max = 100, main = "")
+```
+
+PACF value $r_1$ is almost 1. All other values $r_i, i>1$ are smaller than the critical value. These are the signs of random walk process (cumulative sum of independent observations). Since random walk is a non-stationary process the data should be differenced to apply ARMA model.
+
+## Exercise 8.3
+
+### Data set usnetelec
+
+```{r, comment=""}
+plot(usnetelec)
+```
+
+```{r, comment=""}
+Acf(ibmclose, lag.max = 100, main = "")
+```
+
+ACF does not drop quickly to zero, moreover the value $r_1$ is large and positive (almost 1 in this case). All this are signs of a non-stationary time series. Therefore the data should be differenced to apply ARMA model.
+```{r, comment=""}
+Pacf(ibmclose, lag.max = 100, main = "")
+```
+
+PACF value $r_1$ is almost 1. This is a sign of non-stationary process. The data should be differenced to apply ARMA model.
+
+```{r, comment=""}
+plot(diff(usnetelec))
+```
+
+```{r, comment=""}
+Acf(diff(usnetelec), lag.max = 100, main = "")
+```
+
+```{r, comment=""}
+Pacf(diff(usnetelec), lag.max = 100, main = "")
+```
+
+ACF and PACF functions show that the differenced data behaves almost like white noise (ACF graph value $r_{13}$ is slightly beyond the critical value).
+
+### Data set usgdp
+
+```{r, comment=""}
+plot(usgdp)
+```
+
+```{r, comment=""}
+Acf(usgdp, lag.max = 100, main = "")
+```
+
+ACF does not drop quickly to values inside or almost inside the critical values. Moreover the value $r_1$ is large and positive (almost 1 in this case). All this are signs of a non-stationary time series. Therefore the data should be differenced to apply ARMA model (and maybe transformed before differencing).
+```{r, comment=""}
+Pacf(usgdp, lag.max = 100, main = "")
+```
+
+PACF value $r_1$ is almost 1. This is a sign of non-stationary process. The data should be differenced to apply ARMA model (and maybe transformed before differencing).
+```{r, comment=""}
+lambda = BoxCox.lambda(usgdp)
+plot(diff(BoxCox(usgdp, lambda)))
+```
+
+```{r, comment=""}
+Acf(diff(BoxCox(usgdp, lambda)), lag.max = 100, main = "")
+```
+
+```{r, comment=""}
+Pacf(diff(BoxCox(usgdp, lambda)), lag.max = 100, main = "")
+```
+
+ACF and PACF of transformed and differenced data drops quickly with few spikes for big values of lags slightly beyond critical values.  The data can be considered stationary. ARMA model can be applied.
+
+### Data set mcopper
+
+```{r, comment=""}
+plot(mcopper)
+```
+
+```{r, comment=""}
+Acf(mcopper, lag.max = 100, main = "")
+```
+
+ACF does not drop quickly to values inside or almost inside the critical values. Moreover the value $r_1$ is large and positive (almost 1 in this case). All this are signs of a non-stationary time series. Therefore the data should be differenced to apply ARMA model (and maybe transformed before differencing).
+```{r, comment=""}
+Pacf(mcopper, lag.max = 100, main = "")
+```
+
+PACF value $r_1$ is almost 1. This is a sign of non-stationary process. The data should be differenced to apply ARMA model (and maybe transformed before differencing).
+```{r, comment=""}
+lambda = BoxCox.lambda(mcopper)
+plot(diff(BoxCox(mcopper, lambda)))
+```
+
+```{r, comment=""}
+Acf(diff(BoxCox(usgdp, lambda)), lag.max = 100, main = "")
+```
+
+```{r, comment=""}
+Pacf(diff(BoxCox(usgdp, lambda)), lag.max = 100, main = "")
+```
+
+ACF and PACF of transformed and differenced data drops quickly with few spikes for big values of lags a little beyond critical values.  The data can be considered stationary. ARMA model can be applied.
+
+### Data set enplanements
+
+```{r, comment=""}
+plot(enplanements)
+```
+```{r, comment=""}
+plot(log(enplanements))
+```
+
+```{r, comment=""}
+Acf(log(enplanements), lag.max = 100, main = "")
+```
+
+ACF of logarithms of data does not drop quickly to values inside or almost inside the critical values. Moreover the value $r_1$ is large and positive (0.9). All this are signs of a non-stationary time series. Therefore the data should be differenced to apply ARMA model.
+```{r, comment=""}
+Pacf(log(enplanements), lag.max = 100, main = "")
+```
+
+PACF value $r_1$ is high (around 0.9). This is a sign of non-stationary process. The data should be differenced to apply ARMA model.
+The data should be differenced at least once. Since data is seasonal, it should be differenced with lag equal to number of seasons.
+
+```{r, comment=""}
+plot(diff(log(enplanements), lag = 12))
+```
+
+```{r, comment=""}
+Acf(diff(log(enplanements), lag = 12), lag.max = 100, main = "")
+```
+
+```{r, comment=""}
+Pacf(diff(log(enplanements), lag = 12), lag.max = 100, main = "")
+```
+
+ACF of transformed and differenced data does not drop quickly.  The data should be differenced again to apply ARMA model.
+
+```{r, comment=""}
+plot(diff(diff(log(enplanements), lag = 12)))
+```
+
+```{r, comment=""}
+Acf(diff(diff(log(enplanements), lag = 12)), lag.max = 100, main = "")
+```
+
+```{r, comment=""}
+Pacf(diff(diff(log(enplanements), lag = 12)), lag.max = 100, main = "")
+```
+
+ACF and PACF of transformed and twice differenced data with lags $12$ and $1$ drops quickly with few spikes for big values of lags just beyond critical values.  The data can be considered stationary. seasonal ARMA model can be applied.
+
+### Data set visitors
+
+```{r, comment=""}
+plot(visitors)
+```
+```{r, comment=""}
+lambda = BoxCox.lambda(visitors)
+plot(BoxCox(visitors, lambda))
+```
+
+```{r, comment=""}
+Acf(BoxCox(visitors, lambda), lag.max = 100, main = "")
+```
+
+ACF of logarithms of data does not drop quickly to values inside or almost inside the critical values. Moreover the value $r_1$ is large and positive (0.9). All this are signs of a non-stationary time series. Therefore the data should be differenced to apply ARMA model.
+```{r, comment=""}
+Pacf(BoxCox(visitors, lambda), lag.max = 100, main = "")
+```
+
+PACF value $r_1$ is high (around 0.9). This is a sign of non-stationary process. The data should be differenced to apply ARMA model.
+The data should be differenced at least once. Since data is seasonal, it should be differenced with lag equal to number of seasons.
+
+```{r, comment=""}
+plot(diff(BoxCox(visitors, lambda), lag = 12))
+```
+
+```{r, comment=""}
+Acf(diff(BoxCox(visitors, lambda), lag = 12), lag.max = 100, main = "")
+```
+
+```{r, comment=""}
+Pacf(diff(BoxCox(visitors, lambda), lag = 12), lag.max = 100, main = "")
+```
+
+ACF of transformed and differenced data does not drop quickly.  The data should be differenced again to apply ARMA model.
+
+```{r, comment=""}
+plot(diff(diff(BoxCox(visitors, lambda), lag = 12)))
+```
+
+```{r, comment=""}
+Acf(diff(diff(BoxCox(visitors, lambda), lag = 12)), lag.max = 100, main = "")
+```
+
+```{r, comment=""}
+Pacf(diff(diff(BoxCox(visitors, lambda), lag = 12)), lag.max = 100, main = "")
+```
+
+ACF and PACF of transformed and twice differenced data with lags $12$ and $1$ drops quickly with few spikes for big values of lags just beyond critical values.  The data can be considered stationary. seasonal ARMA model can be applied.
+
+## Exercise 8.4
+
+Differences required for the enplanements data written using backshift operator notation
+$(1-B)(1-B^{12})$
+
+## Exercise 8.5
+
+Data generation for an AR(1) model with $\phi = 0.6$ and $\sigma^2 = 1$
+
+```{r, comment=""}
+AR1 = function(phi)
+{
+  y <- ts(numeric(100))
+  e <- rnorm(100)
+  for(i in 2:100)
+    y[i] <- phi*y[i-1] + e[i]
+  return(y)
+}
+plot(AR1(0.6))
+```
+
+Data generation for an AR(1) model with $\phi = 0$, $\phi = 0.95$, $\phi = -0.95$ and $\sigma^2 = 1$
+
+```{r, comment=""}
+plot(AR1(-0.95))
+plot(AR1(0))
+plot(AR1(0.95))
+```
+
+* For high negative values of $\phi$ the next observation in the generated data almost reflects the previous value with an opposite sign.
+
+* For high positive values of $\phi$ the next observation in the generated data almost repeats the previous value.
+
+Data generation for an ARMA(1,1) model with $\phi = 0.6$, $\theta = 0.6$ and $\sigma^2 = 1$ and an AR(2) model with $\phi_1 = -0.8$, $\phi_2 = 0.3$ and $\sigma^2 = 1$
+
+```{r, comment=""}
+e = rnorm(100, 0, 1)
+arma11 = ar2 = ts(numeric(100))
+for(i in 3:100) {
+  arma11[i] = 0.6*arma11[i-1] + e[i] + 0.6*e[i-1]
+  ar2[i] = -0.8*ar2[i-1] + 0.3*ar2[i-2] + e[i]
+}
+```
+
+```{r, comment=""}
+plot(arma11)
+plot(ar2)
+```
+
+* The first graph is "bound"
+
+* The second graph "explodes"
+
+## Exercise 8.6
+
+Appropriate ARIMA(p,d,q) model for data set wmurders
+
+```{r, comment=""}
+plot(wmurders)
+lambda = BoxCox.lambda(wmurders)
+```
+
+BoxCox.lambda function suggests using Box-Cox transformation with parameter $\lambda=`r round(lambda,3)`$. This value is very close to $0$ and moreover Box-Cox transformation with parameter $0$ is the same as a log transformation which is more interpretable. 
+
+```{r, comment=""}
+tsdisplay(log(wmurders))
+```
+
+The graphs suggest differencing of the data before applying ARMA models.
+
+```{r, comment=""}
+tsdisplay(diff(log(wmurders)))
+```
+
+The ACF and PACF graphs suggest that the resulting time series might be an AR(2) or MA(2) due to the significant spike at lag 2 in both graphs. So either an ARIMA(0,1,2) or an ARIMA(2,1,0) applied to the logged data appear appropriate. As we need to make a choice, I'll use an ARIMA(0,1,2) in what follows.
+
+A constant would imply a drift in the original data which does not look correct, so we omit the constant.
+
+ARIMA(0,1,2): $(1-B)y_t = (1 + \theta_1B + \theta_2B^2) \varepsilon_{t}$.
+
+### Residual analysis
+
+```{r}
+(fit <- Arima(wmurders, c(0,1,2), lambda = 0))
+r <- residuals(fit)
+tsdisplay(r)
+```
+
+```{r, comment=""}
+Box.test(r, type = "Ljung-Box", lag=10, fitdf=2)
+hist(r, main = "Histogram of residuals")
+```
+
+* No obvious patterns are visible on the graph of the residuals
+
+* Ljung-Box test suggests that the residuals are white noise
+
+* The residuals look normal at the histogram
+
+The model is satisfactory.
+
+Three times ahead forecasts using ARIMA(0,1,2) model
+
+```{r}
+fcast = forecast(fit, h = 3)
+```
+
+```{r}
+plot(fcast)
+fcast
+```
+
+```{r echo=FALSE}
+theta1 <- round(coefficients(fit)[1],4)
+theta2 <- round(coefficients(fit)[2],4)
+fc <- fcast$mean
+```
+
+To check the forecasts by hand we use the model written in terms of the backshift operator:
+$$
+ (1-B)y_t = (1 + \theta_1B + \theta_2B^2) \varepsilon_{t},
+$$
+where $y_t$ is the log transformed time series and the coefficients are
+$\theta_1 = `r theta1`$ and $\theta_2 = `r theta2`$. It can be rewritten as: 
+$$
+ y_t = y_{t-1} + \varepsilon_t `r theta1`\varepsilon_{t-1} + `r theta2`\varepsilon_{t-2}.
+$$
+The last observation (on the log scale) is `r round(tail(log(wmurders),1),4)` and the last few residuals are `r round(tail(r, 3),4)`. So the next forecast is:
+$$
+  \hat{y}_{T+1|T} = `r round(tail(log(wmurders),1),4)` + 0 
+    `r theta1` (`r round(tail(r,1),4)`) + 
+    `r theta2` (`r round(tail(r,2)[1],4)`) = `r round(log(fc[1]),4)`
+$$
+which after reversing the log transformation gives 
+$\exp(`r round(log(fc[1]),4)`) = `r round(fc[1],4)`$. 
+Similarly, 
+$$
+  \hat{y}_{T+2|T} = `r round(log(fc[1]),4)` + 0 + 0 +
+    `r theta2` (`r round(tail(r,1),4)`) = `r round(log(fc[2]),4)`
+$$
+giving forecast $\exp(`r round(log(fc[2]),4)`) = `r round(fc[2],4)`$.
+And
+$$
+  \hat{y}_{T+3|T} = `r round(log(fc[2]),4)` + 0 + 0 + 0 = `r round(log(fc[3]),4)`
+$$
+giving forecast $\exp(`r round(log(fc[3]),4)`) = `r round(fc[3],4)`$.
+
+
+Forecasting with `auto.arima`
+
+```{r, comment=""}
+fit.auto = auto.arima(wmurders, lambda = 0)
+fcast.auto = forecast(fit.auto, h = 3)
+plot(fcast.auto)
+```
+
+
+`auto.arima` picked a more complex model which assumes that the trend in the data will continue in the future. The extra level of differencing is hard to justify from the graphs, and it is unlikely that murder rates will fall indefinitely. So I'd probably prefer only one difference. We can force `auto.arima` to do that:
+
+```{r, comment=""}
+(fit.auto = auto.arima(wmurders, lambda = 0, d=1, stepwise=FALSE))
+```
+
+Now `auto.arima` picks the same model that I did.
+
+
+## Exercise 8.7
+
+Data set austourists
+```{r, comment=""}
+plot(austourists)
+lambda = BoxCox.lambda(austourists)
+```
+
+BoxCox.lambda function suggests using Box-Cox transformation with parameter $\lambda=`r round(lambda,3)`$. This value is very close to $0$ and moreover Box-Cox transformation with parameter $0$ has another meaning: it is log transformation which ensures that the forecasted values transformed back to the original scale (using exponent transformation) will be positive. Since number of tourists visiting Australia cannot be negative it makes sense. Therefore we will just use logs of the original data.
+
+```{r, comment=""}
+tsdisplay(log(austourists))
+```
+
+The ACF and PACF graphs suggest seasonal differencing of the data before applying ARMA models.
+
+```{r, comment=""}
+tsdisplay(diff(log(austourists), lag=4))
+```
+
+The ACF and PACF graphs suggest that the resulting time series can be ARMA(0,1)(0,1) or ARMA(0,1)(1,0) or ARMA(1,0)(0,1) or ARMA(1,0)(1,0) models.
+Therefore the suggested ARIMA model for log(austourists) data are ARIMA(0,0,1)(0,1,1) or ARIMA(0,0,1)(1,1,0) or ARIMA(1,0,0)(0,1,1) or ARIMA(1,0,0)(1,1,0).
+A constant should be included in the model since the differenced time series is raised significantly above zero. The constant will lead to a linear trend in the forecasts. Such behaviour is strongly supported by the data.
+
+```{r, comment=""}
+fit1 = Arima(austourists, c(0,0,1), c(0,1,1), include.drift = TRUE, lambda = 0)
+fit2 = Arima(austourists, c(0,0,1), c(1,1,0), include.drift = TRUE, lambda = 0)
+fit3 = Arima(austourists, c(1,0,0), c(0,1,1), include.drift = TRUE, lambda = 0)
+fit4 = Arima(austourists, c(1,0,0), c(1,1,0), include.drift = TRUE, lambda = 0)
+```
+
+The best model out of these four can be chosen using AICc:
+
+```{r, comment=""}
+c(fit1$aicc, fit2$aicc, fit3$aicc, fit4$aicc)
+```
+The lowest AICc is for model ARIMA(1,0,0)(0,1,1) with drift, therefore it is the preferred model for forecasting.
+
+```{r, comment=""}
+auto.arima(austourists, lambda = 0)
+```
+
+auto.arima finds the same model according to AICc.
+
+The best model written using backshift operator and without it
+
+Using backshift operator the model can be written as:
+$(1 - \phi_1 B) (1 - B^4) y_t = c + (1 + \theta_1 B^4) \epsilon_t$
+
+Without the backshift operator the model can be written as:
+$y_t  - \phi_1 y_{t-1} - y_{t-4} + \phi_1 y_{t-5} = c + \epsilon_t + \theta_1 \epsilon_{t-4}$
+or:
+$y_t = \phi_1 y_{t-1} + y_{t-4} - \phi_1 y_{t-5} + c + \epsilon_t + \theta_1 \epsilon_{t-4}$
+
+The last form allows forecasting value $y_t$ assuming that values $y_{t-1}$, $y_{t-4}$, $y_{t-5}$ and $\epsilon_{t-4}$ are known. Value $\epsilon_t$, although, should be estimated as zero.
+
+## Exercise 8.8
+
+### Data set usmelec
+
+```{r, comment=""}
+usmelec
+plot(usmelec); lines(ma(usmelec, 12), col = "red", lwd = 2)
+```
+
+The data show strong up-trend which might be considered as linear in long run.
+
+The seasonal pattern which size increases together with the level of the trend strongly suggests using Box-Cox transformation before forecasting.
+
+```{r, comment=""}
+lambda = BoxCox.lambda(usmelec)
+plot(BoxCox(usmelec, lambda))
+```
+
+BoxCox.lambda function suggests using Box-Cox transformation with parameter $\lambda=`r round(lambda,2)`$.
+
+The data is not stationary (it contains trend), therefore differencing is required to make it stationary for ARMA forecasting.
+
+```{r, comment=""}
+tsdisplay(diff(BoxCox(usmelec, lambda), lag = 12))
+```
+
+ACF and PACF graphs suggest that the data is stationary. Suggested models are:
+ARIMA(1,0,0)(0,1,1)
+ARIMA(2,0,0)(0,1,1)
+ARIMA(3,0,0)(0,1,1)
+
+```{r, comment=""}
+fit1 = Arima(usmelec, c(1,0,0), c(0,1,1), lambda = lambda)
+fit2 = Arima(usmelec, c(2,0,0), c(0,1,1), lambda = lambda)
+fit3 = Arima(usmelec, c(3,0,0), c(0,1,1), lambda = lambda)
+```
+
+```{r, comment=""}
+c(fit1$aicc, fit2$aicc, fit3$aicc)
+```
+The lowest AICc is for model ARIMA(3,0,0)(0,1,1).
+
+#### Residuals analysis
+
+```{r, comment=""}
+tsdisplay(fit3$residuals)
+```
+
+```{r, comment=""}
+Box.test(fit3$residuals, lag = 5, type = "Ljung-Box", fitdf = 4)
+```
+
+ACF and PACF graphs as well as Ljung-Box test suggest that the residuals are not white noise.
+Looking at the residuals we can suggest spikes at lags 3 and 4 at ACF graph can be removed by increasing MA value in ARIMA model:
+
+```{r, comment=""}
+fit4 = Arima(usmelec, c(3,0,1), c(0,1,1), lambda = lambda)
+fit5 = Arima(usmelec, c(3,0,2), c(0,1,1), lambda = lambda)
+fit6 = Arima(usmelec, c(3,0,3), c(0,1,1), lambda = lambda)
+```
+
+```{r, comment=""}
+c(fit4$aicc, fit5$aicc, fit6$aicc)
+```
+
+It appears that currently model ARIMA(3,0,1)(0,1,1) is with the lowest AICc.
+
+The residuals for this model are:
+
+```{r, comment=""}
+tsdisplay(fit4$residuals)
+```
+
+Which are good except for the spikes at ACF and PACF graphs at lag 15. We will try to rectify it by increasing AR and MA values for seasonal and non-seasonal ARIMA parts:
+
+```{r, comment=""}
+fit7 = Arima(usmelec, c(3,0,1), c(1,1,1), lambda = lambda)
+fit8 = Arima(usmelec, c(4,0,1), c(0,1,1), lambda = lambda)
+fit9 = Arima(usmelec, c(4,0,1), c(1,1,1), lambda = lambda)
+```
+
+```{r, comment=""}
+c(fit7$aicc, fit8$aicc, fit9$aicc)
+```
+
+All received AICc values are greater than for the best found model ARIMA(3,0,1)(0,1,1). Therefore ARIMA(3,0,1)(0,1,1) should be used for forecasting.
+The residuals although appear to be correlated for lag 15:
+
+```{r, comment=""}
+Box.test(fit4$residuals, lag = 15, type = "Ljung-Box", fitdf = 4)
+```
+
+It means that the forecasting intervals, calculated using this model can be incorrect.
+
+### Forecasting 15 years ahead and comparing with existing data (from http://www.eia.gov/totalenergy/data/monthly/#electricity)
+
+```{r, comment=""}
+# New data taken from http://www.eia.gov/totalenergy/data/monthly/#electricity website
+newData = c(306009.629,362119.081,362871.893,313126.607,318709.941,302400.724,323628.238,
+         367727.015,418692.755,406511.315,337931.318,308698.504,304102.155,335740.463,
+         339528.259,309389.42,309090.569,295228.216,336517.631,360826.151,414639.671,
+         395699.566,334584.877,311650.774,305975.035,334635.089,348489.737,309435.119,
+         325301.486,298073.696,321833.617,356224.262,393799.21,383968.062,340293.27,
+         314682.729,313751.509,352356.534,377019.193,323662.011,331595.192,296766.045,
+         323730.672,357419.408,384838.868,383494.071,338975.899,313971.928,317176.051)/1000
+newTs = ts(newData, start = c(2010, 11), frequency = 12)
+
+fcast = forecast(fit4, h = 15*12)
+plot(fcast)
+lines(newTs, col = "red", lwd = 1.5)
+accuracy(fcast, newTs)
+```
+
+The forecasts are good. Probably quite a few years of forecasts can be correct. Although the forecasting intervals are expanding very quickly and therefore the forecasts become less and less useful when the forecasting horizon increases.
+
+## Exercise 8.9
+
+### Data set mcopper
+
+```{r, comment=""}
+mcopper
+plot(mcopper)
+```
+
+```{r, comment=""}
+lambda = BoxCox.lambda(mcopper)
+plot(BoxCox(mcopper, lambda))
+```
+
+BoxCox.lambda function suggests using Box-Cox transformation with parameter $\lambda=`r round(lambda,2)`$.
+
+### Finding a suitable model using auto.arima and trying other models
+
+```{r, comment=""}
+fit = auto.arima(mcopper, lambda = lambda)
+fit
+```
+
+Other models which can be  tried are ARIMA(2,1,0) and ARIMA(7,1,0):
+
+```{r, comment=""}
+fit1 = Arima(mcopper, c(2,1,0), lambda = lambda)
+fit2 = Arima(mcopper, c(7,1,0), lambda = lambda)
+```
+
+```{r, comment=""}
+c(fit$aicc, fit1$aicc, fit2$aicc)
+```
+
+The lowest AICc is for model ARIMA(0,1,1) ( the model which was proposed by auto.arima).
+
+### Residuals diagnostics for model ARIMA(0,1,1)
+
+```{r, comment=""}
+hist(fit$residuals)
+tsdisplay(fit$residuals)
+Box.test(fit$residuals, lag = 12, type = "Ljung-Box", fitdf = 1)
+```
+
+* The residuals look normal at the histogram
+
+* No obvious patterns are visible on the graph of the residuals
+
+* The residuals are white noise
+
+### Comparing forecasts of auto.arima and ets
+
+```{r, comment=""}
+fcast = forecast(fit, h = 20)
+plot(fcast)
+```
+
+```{r, comment=""}
+fit.ets = ets(mcopper)
+fcast.ets = forecast(fit.ets, h = 20)
+plot(fcast.ets)
+```
+
+Forecasts look differently, but taking into account that the forecasting intervals are very wide, both forecasts provide similar results.
+
+## Exercise 8.10
+
+### Data set condmilk
+
+```{r, comment=""}
+condmilk
+plot(condmilk)
+```
+
+The trend in the data very flat, therefore transformation will not adjust sizes of the seasonal patterns much. No transformation is required.
+
+The data is not stationary due to the seasonal pattern. Differencing with lag 12 is required:
+
+```{r, comment=""}
+tsdisplay(diff(condmilk, lag = 12))
+```
+
+There is still a lot of autocorrelation left in the data. ACF and PACF graphs suggest one more differencing.
+
+```{r, comment=""}
+tsdisplay(diff(diff(condmilk, lag = 12)))
+```
+
+After two differencing the data is stationary.
+The suggested models are:
+
+ARIMA(0,1,0)(0,1,1)
+ARIMA(0,1,0)(2,1,0)
+ARIMA(5,1,0)(0,1,1)
+ARIMA(5,1,0)(2,1,0)
+ARIMA(0,1,5)(0,1,1)
+ARIMA(0,1,5)(2,1,0)
+```{r, comment=""}
+fit1 = Arima(condmilk, c(0,1,0), c(0,1,1))
+fit2 = Arima(condmilk, c(0,1,0), c(2,1,0))
+fit3 = Arima(condmilk, c(5,1,0), c(0,1,1))
+fit4 = Arima(condmilk, c(5,1,0), c(2,1,0))
+fit5 = Arima(condmilk, c(0,1,5), c(0,1,1))
+fit6 = Arima(condmilk, c(0,1,5), c(2,1,0))
+```
+
+```{r, comment=""}
+c(fit1$aicc, fit2$aicc, fit3$aicc,  fit4$aicc, fit5$aicc, fit6$aicc)
+```
+
+The best model is ARIMA(0,1,0)(0,1,1).
+
+### Residuals analysis
+
+```{r, comment=""}
+hist(fit1$residuals)
+tsdisplay(fit1$residuals)
+Box.test(fit1$residuals, lag = 24, type = "Ljung-Box", fitdf = 1)
+```
+
+Residuals' distribution is close to normal. Residuals are uncorrelated. The model is satisfactory.
+
+### Forecasting 24 months ahead and comparing with ets forecasts
+
+```{r, comment=""}
+fcast1 = forecast(fit1, h = 24)
+fit.ets = ets(condmilk)
+fcast.ets = forecast(fit.ets, h = 24)
+par(mfrow=c(1,2))
+plot(fcast1, ylim = c(-50,200))
+plot(fcast.ets, ylim = c(-50,200))
+```
+
+The point forecasts are similar, although the forecasting intervals are smaller for ets.
+
+## Exercise 8.11
+
+### Forecasting with non-seasonal model applied to the seasonally adjusted data obtained from STL
+
+```{r, comment=""}
+fcast.stlf = stlf(condmilk, h = 24, method = "arima")
+par(mfrow=c(1,2))
+plot(fcast1, ylim = c(-50,200))
+plot(fcast.stlf, ylim = c(-50,200), main = "STL + ARIMA")
+```
+
+Forecasting with stlf looks very promising due to very small forecasting intervals. Although the forecasting intervals for stlf are probably smaller than they should be. It is because the uncertainty in seasonal decomposition is not taken into account during forecasting intervals' calculations. 

@@ -1,0 +1,418 @@
+---
+title: "Solutions for exercises of Section 7."
+author: "Rob J Hyndman & George Athanasopoulos"
+output: html_document
+---
+```{r, echo = F, message = F}
+require(fpp)
+```
+
+## Exercise 7.1
+
+### Data set books
+```{r, comment=""}
+books
+```
+```{r, comment=""}
+plot(books, main = "Data set books")
+```
+
+* The data has upward trend, which is probably linear.
+
+* The data has cyclic structure, although seasonality is not present.
+
+Within-sample SSE for the one-step forecasts for paperback books
+
+```{r, comment=""}
+alpha = seq(0.01, 0.99, 0.01) # Vector of values from 0.01 to 0.99 with step 0.01
+
+# Initialization of variable SSE with a single value NA.
+# Later variable SSE will be a vector containing sums of squared errors for different values of alpha.
+SSE = NA
+
+# Iterate through all values of vector alpha
+for(i in seq_along(alpha)) {
+  fcast = ses(books[,"Paperback"], alpha = alpha[i], initial = "simple")
+  SSE[i] = sum((books[,"Paperback"] - fcast$fitted)^2)
+}
+
+# Plot of sums of squared errors calculated for different values alpha
+plot(alpha, SSE, type = "l")
+```
+
+* Parameter alpha affects accuracy of within-sample one-step forecasts.
+
+* The best accuracy of within-sample one-step forecasts is achieved for alpha approximately equal to $0.2$.
+
+Best value of alpha and 4 days ahead forecast for paperback books
+
+Setting initial = "simple"
+
+```{r, comment=""}
+fcastPaperSimple = ses(books[,"Paperback"], initial = "simple", h = 4) # 4 days ahead forecast
+# Chosen alpha can be accessed this way:
+fcastPaperSimple$model$par[1]
+plot(fcastPaperSimple)
+```
+
+Setting initial = "optimal"
+
+```{r, comment=""}
+fcastPaperOpt = ses(books[,"Paperback"], initial = "optimal", h = 4)
+fcastPaperOpt$model$par[1]
+plot(fcastPaperOpt)
+```
+
+Although the values alpha for different initial settings vary significantly, the final forecasts are almost identical:
+
+```{r, comment=""}
+as.numeric((fcastPaperOpt$mean - fcastPaperSimple$mean)/fcastPaperSimple$mean) * 100 # In per cents
+```
+
+Within-sample SSE for the one-step forecasts for hardcover books
+
+```{r, comment=""}
+alpha = seq(0.01, 0.99, 0.01) # Vector of values from 0.01 to 0.99 with step 0.01
+
+# Initialization of variable SSE with a single value NA.
+# Later variable SSE will be a vector containing sums of squared errors for different values of alpha.
+SSE = NA
+
+# Iterate through all values of vector alpha
+for(i in seq_along(alpha)) {
+  fcast = ses(books[,"Hardcover"], alpha = alpha[i], initial = "simple")
+  SSE[i] = sum((books[,"Hardcover"] - fcast$fitted)^2)
+}
+
+# Plot of sums of squared errors calculated for different values alpha
+plot(alpha, SSE, type = "l")
+```
+
+* Parameter alpha affects accuracy of within-sample one-step forecasts.
+
+* The best accuracy of within-sample one-step forecasts is achieved for alpha approximately equal to $0.35$.
+
+Best value of alpha and 4 days ahead forecast for hardcover books
+
+Setting initial = "simple"
+
+```{r, comment=""}
+fcastHardSimple = ses(books[,"Hardcover"], initial = "simple", h = 4) # 4 days ahead forecast
+# Chosen alpha can be accessed this way:
+fcastHardSimple$model$par[1]
+plot(fcastHardSimple)
+```
+
+Setting initial = "optimal"
+
+```{r, comment=""}
+fcastHardOpt = ses(books[,"Hardcover"], initial = "optimal", h = 4)
+fcastHardOpt$model$par[1]
+plot(fcastHardOpt)
+```
+
+Although the values alpha for different initial settings are rather close, the final forecasts are more distant than for paperback books case:
+
+```{r, comment=""}
+as.numeric((fcastHardOpt$mean - fcastHardSimple$mean)/fcastHardSimple$mean) * 100 # In per cents
+```
+
+
+
+## Exercise 7.2
+
+Four-day forecasts of the paperback and hardback series using Holt’s linear method
+
+```{r, comment=""}
+fcastPaperHolt = holt(books[,"Paperback"], h=4)
+plot(fcastPaperHolt)
+```
+```{r, comment=""}
+fcastHardHolt = holt(books[,"Hardcover"], h=4)
+plot(fcastPaperHolt)
+```
+
+Comparison of simple exponential smoothing and Holt’s linear methods
+
+```{r, comment=""}
+SSEPaperOpt = sum(fcastPaperOpt$residuals^2)
+SSEPaperHolt = sum(fcastPaperHolt$residuals^2)
+```
+
+```{r, comment=""}
+SSEPaperOpt
+SSEPaperHolt
+```
+
+```{r, comment=""}
+SSEHardOpt = sum(fcastHardOpt$residuals^2)
+SSEHardHolt = sum(fcastHardHolt$residuals^2)
+```
+
+```{r, comment=""}
+SSEHardOpt
+SSEHardHolt
+```
+
+Sums of squared errors are much smaller for Holt's linear method rather than for simple exponential smoothing method in both cases: for Paperback and Hardcover series.
+
+It is clear that Holt's linear method takes into account presence of the upward trend in the data. It leads to a better fit (better one step ahead forecasts).
+
+### Comparison of the forecasts for the two series using both methods
+
+#### Paperback series
+
+```{r, comment=""}
+par(mfrow=c(1,2)) # This line positions plots side-by-side
+plot(fcastPaperOpt, main = "Simple exponential smoothing")
+plot(fcastPaperHolt, main = "Holt's linear method")
+```
+#### Hardcover series
+
+```{r, comment=""}
+par(mfrow=c(1,2)) # This line positions plots side-by-side
+plot(fcastHardOpt, main = "Simple exponential smoothing")
+plot(fcastHardHolt, main = "Holt's linear method")
+```
+
+Probably, in both cases, Holt's linear method will predict better than simple exponential smoothing method. It is because Holt's method takes into account clear upward trend in the data, while simple exponential smoothing does not.
+
+### 95% prediction interval for the first forecast for each series using both methods (normal errors are assumed)
+
+#### Paperback series, simple exponential smoothing method
+
+```{r, comment=""}
+intLength = qnorm(0.975, sd = sqrt(fcastPaperOpt$model$mse))
+High = fcastPaperOpt$mean[1] + intLength
+Low = fcastPaperOpt$mean[1] - intLength
+# The result is presented as a vector where elements are named
+# The first two elements are the prediction interval calculated above
+# The last two elements are the prediction interval calculated by ses method
+c(Low = Low, High = High, RLow = fcastPaperOpt$lower[1,2], RHigh = fcastPaperOpt$upper[1,2])
+```
+
+#### Paperback series, Holt's linear method
+
+```{r, comment=""}
+intLength = qnorm(0.975, sd = sqrt(fcastPaperHolt$model$mse))
+High = fcastPaperHolt$mean[1] + intLength
+Low = fcastPaperHolt$mean[1] - intLength
+c(Low = Low, High = High, RLow = fcastPaperHolt$lower[1,2], RHigh = fcastPaperHolt$upper[1,2])
+```
+
+#### Hardcover series, simple exponential smoothing method
+
+```{r, comment=""}
+intLength = qnorm(0.975, sd = sqrt(fcastHardOpt$model$mse))
+High = fcastHardOpt$mean[1] + intLength
+Low = fcastHardOpt$mean[1] - intLength
+c(Low = Low, High = High, RLow = fcastHardOpt$lower[1,2], RHigh = fcastHardOpt$upper[1,2])
+```
+
+#### Hardcover series, Holt's linear method
+
+```{r, comment=""}
+intLength = qnorm(0.975, sd = sqrt(fcastHardHolt$model$mse))
+High = fcastHardHolt$mean[1] + intLength
+Low = fcastHardHolt$mean[1] - intLength
+c(Low = Low, High = High, RLow = fcastHardHolt$lower[1,2], RHigh = fcastHardHolt$upper[1,2])
+```
+As we can see, the prediction intervals calculated directly, assuming that the errors are normally distributed, are the same as the prediction intervals calculated by R methods ses and holt.
+## Exercise 7.3
+### Dataset ukcars
+
+```{r, comment=""}
+ukcars
+```
+
+```{r, comment=""}
+plot(ukcars, ylab = "Production, thousands of cars")
+```
+
+* The data is seasonal
+* Some nonlinear trend
+
+### Decomposition of the series using STL
+```{r, comment=""}
+stlFit <- stl(ukcars, s.window = "periodic")
+plot(stlFit)
+adjusted <- seasadj(stlFit)
+plot(adjusted)
+```
+
+### Two years forecast of the series using an additive damped trend method applied to the seasonally adjusted data. Then the forecasts are reseasonalized.
+```{r, comment=""}
+fcastHoltDamp = holt(adjusted, damped=TRUE, h = 8)
+plot(ukcars, xlim = c(1977, 2008))
+lines(fcastHoltDamp$mean + stlFit$time.series[2:9,"seasonal"], col = "red", lwd = 2)
+```
+
+#### RMSE of one step forecasts
+```{r, comment=""}
+dampHoltRMSE = sqrt(mean(((fcastHoltDamp$fitted + stlFit$time.series[,"seasonal"]) - ukcars)^2))
+dampHoltRMSE
+```
+
+### Two years forecast of the series using Holt's linear trend method applied to the seasonally adjusted data. Then the forecasts are reseasonalized.
+```{r, comment=""}
+fcastHolt = holt(adjusted, h = 8)
+plot(ukcars, xlim = c(1997, 2008))
+lines(fcastHolt$mean + stlFit$time.series[2:9,"seasonal"], col = "red", lwd = 2)
+```
+
+#### RMSE of one step forecasts
+```{r, comment=""}
+holtRMSE = sqrt(mean(((fcastHolt$fitted + stlFit$time.series[,"seasonal"]) - ukcars)^2))
+holtRMSE
+```
+
+### Two years forecast of the series using ets method
+```{r, comment=""}
+etsFit = ets(ukcars)
+fcastEts = forecast(etsFit, h = 8)
+plot(fcastEts)
+```
+
+#### RMSE of one step forecasts
+```{r, comment=""}
+etsRMSE = sqrt(mean((fcastEts$fitted - ukcars)^2))
+etsRMSE
+```
+
+### RMSE of the Holt's method and ets forecasts
+
+```{r, comment=""}
+c(HoltRMSE = holtRMSE, EtsRMSE = etsRMSE)
+```
+### Comparison of the Holt's linear trend and ets methods
+* The forecasts of the Holt's linear trend and ets methods look very similar and therefore it is very difficult to judge which one is better.
+* ets method has slightly worse fit to the training data than the Holt's linear method. But the forecasts are very similar and it is hard to pick between them.
+
+## Exercise 7.4
+### Dataset visitors
+
+```{r, comment=""}
+visitors
+plot(visitors, ylab = "Thousands of people")
+```
+
+* The data has upward trend.
+* The data has seasonal pattern which increases it's size approximately proportionally to the average number of people arrived per year. Therefore, it can be claimed, that the data has multiplicative seasonality.
+
+### Forecast of the next two years using Holt-Winters' multiplicative method.
+```{r, comment=""}
+fcast = hw(visitors, h=24, seasonal="multiplicative")
+plot(fcast)
+```
+
+The multiplicative seasonality is important in this example. It reflects and then projects the behaviour of the seasonal pattern, which increases in size proportionally to the level of the trend.
+
+### Experimenting with exponential and/or damped trends.
+```{r, comment=""}
+fcastDamp = hw(visitors, h=24, seasonal="multiplicative", damped=TRUE, exponential=FALSE)
+plot(fcastDamp, main = "Damped treand forecasts")
+```
+
+```{r, comment=""}
+fcastExp = hw(visitors, h=24, seasonal="multiplicative", damped=FALSE, exponential=TRUE)
+plot(fcastExp, main = "Exponential treand forecasts")
+```
+
+```{r, comment=""}
+fcastDampExp = hw(visitors, h=24, seasonal="multiplicative", damped=TRUE, exponential=TRUE)
+plot(fcastDampExp, main = "Damped exponential treand forecasts")
+```
+
+Different methods project the trend differently into the future. Although the short term forecasts are not very different, the long term forecasts will change a lot.
+
+### Comparing the RMSE of the one-step forecasts from the above methods.
+```{r, comment=""}
+c(RMSE = sqrt(fcast$model$mse), RMSEDamp = sqrt(fcastDamp$model$mse), RMSEExp = sqrt(fcastExp$model$mse), RMSEDampExp = sqrt(fcastDampExp$model$mse))
+```
+
+Damped trend method fits the data better than the other methods (in terms of RMSE of one-step ahead forecasts over the whole data set). If we assume that the methods are approximately same complex, we can expect that the damped trend method will forecast better than the other methods beyond the training data.
+
+### Residual diagnostics and forecasts for the next two years for different methods.
+```{r, comment=""}
+# Multiplicative Holt-Winters' method
+fcasHW = hw(visitors, h=24, seasonal="multiplicative")
+
+# ETS model
+fitETS = ets(visitors)
+fcastETS = forecast(fitETS, h = 24)
+
+# Additive ETS model applied to a Box-Cox transformed series
+fitETSlog = ets(visitors, lambda = 0, model = "AAA")
+fcastETSlog = forecast(fitETSlog, h = 24)
+
+# Seasonal naive method applied to the Box-Cox transformed series
+fcastSnaiveLog = snaive(visitors, h = 24, lambda = 0)
+
+# STL decomposition applied to the Box-Cox transformed data
+# followed by an ETS model applied to the seasonally adjusted (transformed) data
+fitStlm = stlm(visitors, method = "ets", lambda = 0)
+fcastStlm = forecast(fitStlm, h = 24)
+
+# Plotting all forecasts
+plot(visitors, xlim = c(1985, 2008))
+lines(fcasHW$mean, col = 2)
+lines(fcastETS$mean, col = 3)
+lines(fcastETSlog$mean, col = 4)
+lines(fcastSnaiveLog$mean, col = 5)
+lines(fcastStlm$mean, col = 6)
+legend("topleft",
+       legend = c("Multiplicative Holt-Winters'", "ETS", "Log + additive ETS",
+                  "Log + seasonal naive", "Log + stlm method"),
+       col = 2:6, lwd = 2)
+```
+
+The forecasts look very similar.
+
+###  Residual diagnostics
+```{r, comment=""}
+# Plotting the residuals
+par(mfrow=c(1,2)) # This line positions two consequent plots side-by-side
+plot(fcasHW$residuals, ylab = "Residuals")
+abline(h = 0, col = "red")
+hist(fcasHW$residuals, main = "", xlab = "Residuals")
+```
+
+The residuals positively scewed. They might be serially correlated.
+
+```{r, comment=""}
+par(mfrow=c(1,2))
+plot(fcastETS$residuals, ylab = "Residuals")
+abline(h = 0, col = "red")
+hist(fcastETS$residuals, main = "", xlab = "Residuals")
+```
+
+The residuals might be serially correlated. The distribution looks normal.
+
+```{r, comment=""}
+par(mfrow=c(1,2))
+plot(fcastETSlog$residuals, ylab = "Residuals")
+abline(h = 0, col = "red")
+hist(fcastETSlog$residuals, main = "", xlab = "Residuals")
+```
+
+The residuals might be serially correlated. The distribution looks rather normal.
+
+```{r, comment=""}
+par(mfrow=c(1,2))
+plot(fcastSnaiveLog$residuals, ylab = "Residuals")
+abline(h = 0, col = "red")
+hist(fcastSnaiveLog$residuals, main = "", xlab = "Residuals")
+```
+
+The residuals are positively biased and serially correlated.
+
+```{r, comment=""}
+par(mfrow=c(1,2))
+plot(fcastStlm$residuals, ylab = "Residuals")
+abline(h = 0, col = "red")
+hist(fcastStlm$residuals, main = "", xlab = "Residuals")
+```
+
+The residuals might be serially correlated. The distribution does not look normal.
+
+Although the residuals look a little bit serially correlated for the last method, they are smallest in size among the considered models. Assuming that all methods approximately same complex, the last method is the most promising for forecasting.

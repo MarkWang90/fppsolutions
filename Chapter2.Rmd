@@ -1,0 +1,154 @@
+---
+title: "Exercise solutions: Section 2.8"
+author: "Rob J Hyndman & George Athanasopoulos"
+output: html_document
+---
+```{r, echo = F, message = F}
+require(fpp)
+```
+
+## Exercise 2.1
+
+### Monthly total of people on unemployed benefits in Australia (January 1956–July 1992)
+
+```{r}
+require(fpp) # fpp package needs to be loaded once in the beginning of every R session
+lambda = BoxCox.lambda(dole)
+plot(BoxCox(dole, lambda), xlab = "Time", 
+  ylab = paste("BoxCox(# people,", round(lambda, 2), ")"))
+```
+
+The data was transformed using Box-Cox transformation with parameter $\lambda=`r round(lambda,2)`$.
+
+### Monthly total of accidental deaths in the United States (January 1973–December 1978)
+
+```{r}
+plot(usdeaths, xlab = "Time", ylab = "# deaths")
+```
+
+### Quarterly production of bricks (in millions of units) at Portland, Australia (March 1956–September 1994)
+
+```{r}
+lambda = BoxCox.lambda(bricksq)
+plot(BoxCox(bricksq, lambda), xlab = "Time", 
+     ylab = paste("BoxCox(# mln bricks,", round(lambda, 2), ")"))
+```
+
+The data was transformed using Box-Cox transformation with parameter $\lambda=`r round(lambda,2)`$.
+
+
+\newpage
+
+
+## Exercise 2.2
+
+Time plot of the Dow Jones index:
+
+```{r}
+plot(dowjones, xlab = "Time", ylab = "Value $")
+```
+
+Forecasts using the drift method:
+
+```{r}
+plot(rwf(dowjones, drift = TRUE, h = 20), xlab = "Time", ylab = "Value $", main = "")
+```
+
+Graphed forecasts are identical to extending the line drawn between the first and last observations:
+
+```{r}
+plot(rwf(dowjones, drift = TRUE, h = 20), xlab = "Time", ylab = "Value $", main = "")
+slope = (tail(dowjones, 1) - head(dowjones, 1)) / (length(dowjones) - 1)
+intercept = head(dowjones, 1) - slope # Since time starts from 1
+abline(intercept, slope, lty = 2, col = "red")
+```
+
+Some other benchmark methods:
+
+```{r}
+plot(rwf(dowjones, drift=TRUE, h=20, level=0), xlab="Time", ylab="Value $", main="")
+lines(naive(dowjones, h=20, level=0)$mean, xlab="", ylab="", main="", col="green")
+lines(meanf(dowjones, h=20, level=0)$mean, xlab="", ylab="", main="", col="red")
+# "$mean" after the function calls above is used
+# to extract vector of the forecasted values from the function output
+legend("topleft",
+  legend = c("Random walk with drift", "Random walk without drift", "Mean forecast"),
+  col = c("blue", "green", "red"), lty=1)
+```
+
+Random Walk Forecast (`rwf`) method with and without drift might be the best forecasting methods.
+
+
+\newpage
+
+
+## Exercise 2.3
+
+Plot of daily closing IBM stock prices (data set ibmclose):
+
+```{r}
+plot(ibmclose, xlab = "Time", ylab = "Value $", main = "")
+```
+
+Splitting the data into a training set of 300 observations and a test set of 69 observations:
+
+```{r}
+trainingSet = window(ibmclose, 1, 300)
+testSet = window(ibmclose, 301, 369)
+```
+
+Benchmark methods are used to forecast the training set. The results are compared on the test set.
+
+```{r}
+rwfForecast = rwf(trainingSet, h = 69)$mean
+rwfWithDriftForecast = rwf(trainingSet, drift = TRUE, h = 69)$mean
+meanfForecast = meanf(trainingSet, h = 69)$mean
+```
+```{r, comment = ""}
+# Comparing the above forecasts
+accuracy(rwfForecast, testSet)
+accuracy(rwfWithDriftForecast, testSet)
+accuracy(meanfForecast, testSet)
+```
+
+According to RMSE (Root Mean Square Error) the best forecast is provided by the Random Walk Forecast with Drift method.  
+If MAE (Mean Absolute Error) or MAPE (Mean Absolute Percentage Error) are considered, they give the same result.
+
+
+\newpage
+
+
+## Exercise 2.4
+
+Plot of monthly sales of new one-family houses in the USA, Jan 1973 – Nov 1995 (data set `hsales`):
+
+```{r}
+plot(hsales, xlab = "Time", ylab = "Sales", main = "")
+```
+
+Splitting the hsales data set into a training set and a test set, where the test set is the last two years of data.
+
+```{r}
+trainingSet = window(hsales, end = c(1993,12))
+testSet = window(hsales, start = c(1994,1))
+```
+
+Benchmark methods are used to forecast the training set. The results are compared on the test set.
+
+```{r}
+rwfForecast = rwf(trainingSet, h = 23)$mean
+rwfWithDriftForecast = rwf(trainingSet, drift = TRUE, h = 23)$mean
+meanfForecast = meanf(trainingSet, h = 23)$mean
+snaiveForecast = snaive(trainingSet, h = 23)$mean
+```
+```{r, comment = ""}
+# Comparing the above forecasts
+accuracy(rwfForecast, testSet)
+accuracy(rwfWithDriftForecast, testSet)
+accuracy(meanfForecast, testSet)
+accuracy(snaiveForecast, testSet)
+```
+
+According to RMSE (Root Mean Square Error) the best forecast is provided by the Seasonal Naive method.  
+If MAE (Mean Absolute Error) or MAPE (Mean Absolute Percentage Error) are considered, they give the same result.
+

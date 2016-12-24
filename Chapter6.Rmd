@@ -1,0 +1,112 @@
+---
+title: "Solutions for exercises of Section 6."
+author: "Rob J Hyndman & George Athanasopoulos"
+output: html_document
+---
+```{r, echo = F, message = F}
+require(fpp)
+```
+
+## Exercise 6.1
+
+3×5 MA is equivalent to a 7-term weighted moving average with weights of 0.067, 
+0.133, 0.200, 0.200, 0.200, 0.133, and 0.067
+5-term moving average is calculated using the following formula:
+$z_i = \frac{1}{5}(y_{i-2}+y_{i-1}+y_i+y_{i+1}+y_{i+2})$.
+
+When 3-term moving average is the applied the following formula is used:
+$u_i = \frac{1}{3}(z_{i-1}+z_i+z_{i+1})$.
+
+Substituting expression for $z_i$ into the latter formula we get:
+
+$u_i = \frac{1}{3}\left(\frac{1}{5}\left(y_{i-3}+y_{i-2}+y_{i-1}+y_{i}+y_{i+1}\right)+\frac{1}{5}\left(y_{i-2}+y_{i-1}+y_i+y_{i+1}+y_{i+2}\right)+\frac{1}{5}\left(y_{i-1}+y_{i}+y_{i+1}+y_{i+2}+y_{i+3}\right)\right)$.
+
+After opening the brackets it becomes:
+
+$u_i = \frac{1}{15}\left(y_{i-3}+2y_{i-2}+3y_{i-1}+3y_{i}+3y_{i+1}+2y_{i+2}+y_{i+3}\right)$,
+
+which is exactly a 7-term weighted moving average with weights of 0.067, 0.133, 0.200, 0.200, 0.200, 0.133, and 0.067
+
+
+\newpage
+
+
+## Exercise 6.2
+
+### Data set plastics
+```{r, comment=""}
+plastics
+```
+### Plot time series
+```{r, comment=""}
+plot(plastics, ylab = "Sales of product A")
+```
+
+Seasonal fluctuations have smooth sinusoidal shape. The data has upward, close to linear trend.
+### Trend-cycle and seasonal indices
+```{r, comment=""}
+fit <- decompose(plastics, type="multiplicative")
+plot(fit)
+```
+
+The results partially support conclusions from the prevous part. The trend appears to be nonlinear in the beginning and in the end.
+### Seasonally adjusted data
+```{r, comment=""}
+seasAdj <- seasadj(fit)
+plot(seasAdj, ylab = "Seasonally adjusted data")
+```
+### Seasonally adjusted data with an outlier in the middle of the data
+```{r, comment=""}
+plastics2 = plastics
+plastics2[31] = plastics2[31] + 500
+fit <- decompose(plastics2, type="multiplicative")
+plot(fit)
+seasAdj <- seasadj(fit)
+plot(seasAdj, ylab = "Seasonally adjusted data")
+```
+
+The outlier apperas partially in the seasonally adjusted data.
+### Seasonally adjusted data with an outlier at the end
+```{r, comment=""}
+plastics3 = plastics
+plastics3[59] = plastics3[59] + 500
+fit <- decompose(plastics3, type="multiplicative")
+plot(fit)
+seasAdj <- seasadj(fit)
+plot(seasAdj, ylab = "Seasonally adjusted data")
+```
+
+The outlier apperas in the seasonally adjusted data almost completely.
+
+When outlier at the end of the data it affects the seasonal pattern less than when it is in the middle. Therefore the outlier at the end of the data appears in the seasonally adjusted data more pronaunced than when it is in the middle.
+### Random walk with drift forecasts of the seasonally adjusted data
+```{r, comment=""}
+fit <- decompose(plastics, type="multiplicative")
+seasAdj <- seasadj(fit)
+driftFit = rwf(seasAdj, drift=TRUE, h=24)
+plot(driftFit)
+```
+### Reseasonalized forecasts of the seasonally adjusted data
+```{r, comment=""}
+plot(driftFit, ylim = c(500, 2200))
+lines(driftFit$mean*fit$figure, col = "green", lwd = 2)
+lines(driftFit$upper[,2]*fit$figure, col="red")
+lines(driftFit$lower[,2]*fit$figure, col="red")
+lines(plastics, col = "green", lwd = 2)
+```
+
+
+\newpage
+
+
+## Exercise 6.3
+
+Analysis of the number of persons in the civilian labor force in Australia each month from February 1978 to August 1995
+
+* The data has steady upward trend with small dips around 1991/1992 years.
+
+* The data has rather strong seasonal pattern which changes over time.
+
+* The seasonal component changes mostly in March, then, in decreasing order, in September, April and December.
+
+* The recession of 1991/1992 visible in the trend as two dips and, in the remainder, as correlated values with higher than avearge amplitude.
