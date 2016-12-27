@@ -1,0 +1,99 @@
+---
+title: "Exercise solutions: Section 2.10"
+author: "Rob J Hyndman & George Athanasopoulos"
+output: html_document
+---
+```{r, echo = F, message = F}
+require(fpp2)
+```
+
+
+1. Download some monthly Australian retail data from [http://robjhyndman.com/data/retail.xlsx](http://robjhyndman.com/data/retail.xlsx). These represent retail sales in various categories for different Australian states, and are stored in a MS-Excel file.
+
+    a. You can read the data into R with the following script:
+
+        ```r
+        retaildata <- readxl::read_excel("retail.xlsx", skip = 1)
+        ```
+
+        You may need to first install the `readxl` package.
+
+    b. Select one of the time series as follows (but replace the column name with your own chosen column):
+
+        ```r
+        mytimeseries <- ts(retaildata[,"A3349873A"], frequency=12, start=c(1982,4))
+        ```
+
+    c. Explore your chosen retail time series using the following functions:
+
+        `autoplot`, `ggseasonplot`, `ggsubseriesplot`, `gglagplot`, `ggAcf`
+
+        Can you spot any seasonality, cyclicity and trend? What do you learn about the series?
+
+2. Repeat for the following series:
+
+    `bicoal`, `chicken`, `dole`, `usdeaths`, `bricksq`, `lynx`, `ibmclose`
+
+    Use the help files to find out what the series are.
+
+3. The `arrivals` data set comprises quarterly international arrivals (in thousands) to Australia from Japan, New Zealand, UK and the US. 1981Q1 - 2012Q3. Use `autoplot`, `ggseasonplot`, `ggsubseriesplot` and compare the differences between the arrivals from these four countries. Can  you identify any unusual observations? 
+
+The time plots show: a decrease in arrivals from Japan since mid-1990s, an increase in arrivals from NZ, a downturn of arrivals from the UK since mid-2000s and a flattening out of the arrivals from the US.
+```{r, echo=FALSE, cache=TRUE}
+data<-as.data.frame(arrivals)
+data$X=seq(as.Date("1981-01-31"), by = "quarter", length = nrow(data))
+
+library(reshape2)
+df.data <- melt(data,id="X")
+
+ggplot(df.data) + geom_line(aes(x=X, y=value, color=variable))+
+  facet_wrap( ~ variable, scales="free",ncol=2) +
+  xlab("Year") + ylab("") + theme(legend.position="none")+
+  geom_vline(xintercept = 20)+
+  ggtitle("Total quarterly arrivals to Australia")
+
+# y=arrivals
+# autoplot(y, facet=TRUE) +
+#   xlab("Year") + ylab("") +
+#   ggtitle("Total quarterly arrivals to Australia")
+```
+
+The seasonal plots show the difference in seasonal patterns from the four source countries. The peaks for from UK and the US happen in Q1 and Q4 which include the summer period in Australia, Christmas and New Year's holiday period with  Q2 and Q3 being the troughs.  For Japan peaks occur mostly in Q1 but also Q3 reflecting both peak arrivals in summer but also winter which possibly correspond to winter skying season or visiting northern Australia in during the dry season. The one source country that is very different is New Zealand. Peak arrivals from New Zealand occur during the Q3 followed by Q2 and Q4. Unlike all other source countries, the trough clearly occurs during Q1 the January (summer) quarter. The seasonal plots are also useful, revealing anomalies or one-off events. For example, in the US plot, the peak arrivals for all July quarters occurred in 2000 during the Sydney Olympic games. 
+
+```{r  cache=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+  seasJap <- ggseasonplot(y[,1], year.labels=TRUE, year.labels.left=TRUE)+ ylab("")+ggtitle("Japan")
+  seasNZ <- ggseasonplot(y[,2], year.labels=TRUE, year.labels.left=TRUE)+ ylab("")+ggtitle("New Zealand")
+  seasUS <- ggseasonplot(y[,3], year.labels=TRUE, year.labels.left=TRUE)+ ylab("")+ggtitle("UK")
+  seasUK <- ggseasonplot(y[,4], year.labels=TRUE, year.labels.left=TRUE)+ ylab("")+ggtitle("US")
+
+    gridExtra::grid.arrange(seasJap,seasNZ,seasUS,seasUK, nrow=2)
+
+    
+  # subJap <- ggsubseriesplot(y[,1], year.labels=TRUE, year.labels.left=TRUE)+ ylab("")+ggtitle("Japan")
+  # subNZ <- ggsubseriesplot(y[,2], year.labels=TRUE, year.labels.left=TRUE)+ ylab("")+ggtitle("New Zealand")
+  # subUS <- ggsubseriesplot(y[,3], year.labels=TRUE, year.labels.left=TRUE)+ ylab("")+ggtitle("UK")
+  # subUK <- ggsubseriesplot(y[,4], year.labels=TRUE, year.labels.left=TRUE)+ ylab("")+ggtitle("US")
+  # 
+  # gridExtra::grid.arrange(seasJap,seasNZ,seasUS,seasUK, 
+  #                         subJap,subNZ,subUS,subUK, nrow=2)
+```
+
+4. The following time plots and ACF plots correspond to four different time series. Your task is to match each  time plot in the first row with one of the ACF plots in the second row.
+
+    ```{r acfguess, fig.height=6, fig.width=12, cache=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+    tp1 <- autoplot(cowtemp) + xlab("") + ylab("chirps per minute") +
+      ggtitle("1. Daily temperature of cow")
+    tp2 <- autoplot(USAccDeaths/1e3) + xlab("") + ylab("thousands") +
+      ggtitle("2. Monthly accidental deaths")
+    tp3 <- autoplot(AirPassengers) + xlab("") + ylab("thousands") +
+      ggtitle("3. Monthly air passengers")
+    tp4 <- autoplot(mink/1e3) + xlab("") + ylab("thousands") +
+      ggtitle("4. Annual mink trappings")
+    acfb <- ggAcf(cowtemp, ci=0) + xlab("") + ggtitle("B") + ylim(-0.4,1)
+    acfa <- ggAcf(USAccDeaths, ci=0) + xlab("") + ggtitle("A") + ylim(-0.4,1)
+    acfd <- ggAcf(AirPassengers, ci=0) + xlab("") + ggtitle("D") + ylim(-0.4,1)
+    acfc <- ggAcf(mink, ci=0) + xlab("") + ggtitle("C") + ylim(-0.4,1)
+    gridExtra::grid.arrange(tp1,tp2,tp3,tp4, 
+                            acfa,acfb,acfc,acfd,nrow=2)
+    ```
+
